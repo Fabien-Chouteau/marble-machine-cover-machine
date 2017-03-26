@@ -1,0 +1,6 @@
+[submodule "software/zfp-nrf51"]
+	path = software/zfp-nrf51
+	url = https://github.com/nocko/zfp-nrf51
+[submodule "software/Ada_Drivers_Library"]
+	path = software/Ada_Drivers_Library
+	url = https://github.com/AdaCore/Ada_Drivers_Library

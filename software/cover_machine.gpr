@@ -1,0 +1,26 @@
+with "Ada_Drivers_Library/boards/microbit.gpr";
+with "Ada_Drivers_Library/boards/MicroBit/config";
+
+project Cover_Machine Is
+
+  for Runtime ("ada") use Project'Project_Dir & "/zfp-nrf51";
+  for Target use "arm-eabi";
+  for Main use ("main.adb");
+  for Languages use ("Ada");
+  for Source_Dirs use ("src");
+  for Object_Dir use "obj";
+
+  package Compiler renames Config.Compiler;
+  package Builder renames Config.Builder;
+
+  package Linker is
+     for Default_Switches ("Ada") use ("-Wl,--print-memory-usage",
+                                       "-Wl,--gc-sections");
+  end Linker;
+
+  package Ide is
+     for Program_Host use ":2331";
+     for Communication_Protocol use "remote";
+  end Ide;
+
+end Cover_Machine;
