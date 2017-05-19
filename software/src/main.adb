@@ -20,83 +20,59 @@
 --                                                                           --
 -------------------------------------------------------------------------------
 
-with MicroBit; use MicroBit;
-with nRF51.GPIO; use nRF51.GPIO;
-with HAL.GPIO; use HAL.GPIO;
-with HAL; use HAL;
-with Solenoids; use Solenoids;
+with MicroBit;      use MicroBit;
+with HAL.GPIO;      use HAL.GPIO;
+with HAL;           use HAL;
+with MicroBit.Time;
+
+with Solenoids;
+with Bass;
+with Song;
+with MIDI;
 
 procedure Main is
-   Data  : nRF51.GPIO.GPIO_Point renames MB_P0;
-   Latch : nRF51.GPIO.GPIO_Point renames MB_P1;
-   Clock : nRF51.GPIO.GPIO_Point renames MB_P2;
-   Unref : Boolean with Unreferenced;
+begin
+   Solenoids.Initialize;
+   Bass.Initialize;
 
-   procedure Wait;
-   procedure Put (Val : Bit);
+   for Msg of Song.Messages loop
+      if Msg.Time_Ms /= 0 then
+         Solenoids.Push;
+         for I in 1 .. 3_000 loop
+            null;
+         end loop;
+         Solenoids.Clear;
+         Solenoids.Push;
 
-   procedure Wait is
-   begin
-      null;
-   end Wait;
-
-   procedure Put (Val : Bit) is
-   begin
-      if Val = 0 then
-         Data.Clear;
-      else
-         Data.Set;
+         MicroBit.Time.Delay_Ms (Msg.Time_Ms - 3);
       end if;
 
-      Wait;
-      Clock.Set;
-      Wait;
-      Clock.Clear;
-   end Put;
+      case Msg.Channel is
+         when MIDI.Glockenspiel =>
+            case Msg.Event is
+               when MIDI.Note_On =>
+                  Solenoids.Set_Glockenspiel (Msg.Note);
+               when MIDI.Note_Off =>
+                  null;
+            end case;
+         when MIDI.Bass =>
+            case Msg.Event is
+               when MIDI.Note_On =>
+                  Bass.Play (Msg.Note);
+               when MIDI.Note_Off =>
+                  Bass.Stop;
+            end case;
+         when MIDI.Drums =>
+            case Msg.Event is
+               when MIDI.Note_On =>
+                  Solenoids.Set_Drum (Msg.Note);
+               when MIDI.Note_Off =>
+                  null;
+            end case;
+      end case;
 
-   Cmd : array (Solenoid_Id) of Boolean;
-begin
-
-   Unref := Data.Set_Mode (Output);
-   Unref := Latch.Set_Mode (Output);
-   Unref := Clock.Set_Mode (Output);
-   Latch.Clear;
-   Data.Clear;
-   Clock.Clear;
-
+   end loop;
    loop
-      for Step of Marble_Machine loop
-         Cmd := (others => False);
-
-         for Note in Notes loop
-            Cmd (Note_To_Solenoid (Note)) := Step (Note) = I;
-         end loop;
-
-         --  Send 16 bits to the shift registers
-         for Id in Solenoid_Id loop
-            Put ((if Cmd (Id) then 1 else 0));
-         end loop;
-
-         Latch.Set;
-         Wait;
-         Latch.Clear;
-
-         for I in 1 .. 5_000 loop
-            null;
-         end loop;
-
-         --  Send 16 zeros to the shift registers
-         for I in 1 .. 16 loop
-            Put (0);
-         end loop;
-
-         Latch.Set;
-         Wait;
-         Latch.Clear;
-
-         for I in 1 .. 300_000 loop
-            null;
-         end loop;
-      end loop;
+      null;
    end loop;
 end Main;
