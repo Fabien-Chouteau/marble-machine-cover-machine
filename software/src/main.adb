@@ -31,11 +31,14 @@ with Song;
 with MIDI;
 
 procedure Main is
+
+   Msg : MIDI.Message;
 begin
    Solenoids.Initialize;
    Bass.Initialize;
 
-   for Msg of Song.Messages loop
+   for Index in Song.Messages'First .. Song.Messages'Last loop
+      Msg :=  Song.Messages (Index);
       if Msg.Time_Ms /= 0 then
          Solenoids.Push;
          for I in 1 .. 3_000 loop
@@ -47,28 +50,25 @@ begin
          MicroBit.Time.Delay_Ms (Msg.Time_Ms - 3);
       end if;
 
-      case Msg.Channel is
-         when MIDI.Glockenspiel =>
-            case Msg.Event is
-               when MIDI.Note_On =>
-                  Solenoids.Set_Glockenspiel (Msg.Note);
-               when MIDI.Note_Off =>
+      case Msg.Event is
+         when MIDI.Note_On =>
+            case Msg.Channel is
+            when MIDI.Glockenspiel =>
+               Solenoids.Set_Glockenspiel (Msg.Note);
+            when MIDI.Bass =>
+               Bass.Play (Msg.Note);
+            when MIDI.Drums =>
+               Solenoids.Set_Drum (Msg.Note);
+            end case;
+         when MIDI.Note_Off =>
+            case Msg.Channel is
+            when MIDI.Bass =>
+               Bass.Stop;
+               when others =>
                   null;
             end case;
-         when MIDI.Bass =>
-            case Msg.Event is
-               when MIDI.Note_On =>
-                  Bass.Play (Msg.Note);
-               when MIDI.Note_Off =>
-                  Bass.Stop;
-            end case;
-         when MIDI.Drums =>
-            case Msg.Event is
-               when MIDI.Note_On =>
-                  Solenoids.Set_Drum (Msg.Note);
-               when MIDI.Note_Off =>
-                  null;
-            end case;
+         when others =>
+            null;
       end case;
 
    end loop;

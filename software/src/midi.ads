@@ -24,17 +24,16 @@ with HAL;
 
 package MIDI is
 
-   subtype MIDI_Note is Natural range 0 .. 127;
-   subtype MIDI_Time is HAL.UInt64;
+   subtype MIDI_Note  is Natural range 0 .. 127;
+   subtype MIDI_Time  is HAL.UInt64;
    type MIDI_Channel is (Glockenspiel, Bass, Drums);
-   type MIDI_Event is (Note_On, Note_Off);
+   type MIDI_Event is (Note_On, Note_Off, Set_Tempo);
 
 
    type Message is record
-      Time_Ms : MIDI_Time;
-      Channel : MIDI_Channel;
       Event   : MIDI_Event;
-      Note    : MIDI_Note;
-   end record;
-
+      Time_Ms : MIDI_Time;
+      Channel : MIDI_Channel := Drums;
+      Note    : MIDI_Note := 0;
+   end record with pack;
 end MIDI;
