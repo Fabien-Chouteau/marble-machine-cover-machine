@@ -20,10 +20,11 @@
 --                                                                           --
 -------------------------------------------------------------------------------
 
-with MicroBit;      use MicroBit;
-with HAL.GPIO;      use HAL.GPIO;
-with HAL;           use HAL;
+with MicroBit;         use MicroBit;
+with HAL.GPIO;         use HAL.GPIO;
+with HAL;              use HAL;
 with MicroBit.Time;
+with MicroBit.Display;
 
 with Solenoids;
 with Bass;
@@ -34,10 +35,23 @@ procedure Main is
 
    Msg : MIDI.Message;
 begin
+
    Solenoids.Initialize;
    Bass.Initialize;
 
+   MicroBit.Display.Set_Animation_Step_Duration (100);
+
+   MicroBit.Display.Display_Async ("LOADING...");
+
+   --  Wait for the solenoid capacitor to charge up
+   MicroBit.Time.Delay_Ms (6000);
+
    for Index in Song.Messages'First .. Song.Messages'Last loop
+
+      if not MicroBit.Display.Animation_In_Progress then
+         MicroBit.Display.Display_Async ("WINTERGATAN-MARBLE MACHINE   ");
+      end if;
+
       Msg :=  Song.Messages (Index);
       if Msg.Time_Ms /= 0 then
          Solenoids.Push;
